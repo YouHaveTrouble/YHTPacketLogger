@@ -1,0 +1,11 @@
+name: YHTPacketLogger
+version: '1.0-SNAPSHOT'
+main: me.youhavetrouble.packetlogger.YHTPacketLogger
+api-version: '1.21'
+softdepend:
+  - ProtocolLib
+  - ProtocolSupport
+  - ViaVersion
+  - ViaBackwards
+  - ViaRewind
+  - Geyser-Spigot
