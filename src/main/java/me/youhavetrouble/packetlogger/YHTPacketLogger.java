@@ -19,7 +19,6 @@ public final class YHTPacketLogger extends JavaPlugin {
         PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
         PacketEvents.getAPI().load();
         PacketEvents.getAPI().getEventManager().registerListener(new PacketEventsListener());
-
     }
 
     @Override

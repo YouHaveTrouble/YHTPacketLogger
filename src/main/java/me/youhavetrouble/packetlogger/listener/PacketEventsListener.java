@@ -4,6 +4,7 @@ import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import me.youhavetrouble.packetlogger.YHTPacketLogger;
 import org.bukkit.entity.Player;
@@ -30,6 +31,13 @@ public class PacketEventsListener extends PacketListenerAbstract {
                 WrapperPlayClientPlayerFlying wrapper = new WrapperPlayClientPlayerFlying(event);
                 if (YHTPacketLogger.getDatabase() != null) {
                     executor.submit(() -> YHTPacketLogger.getDatabase().saveMovementPacket(player, wrapper));
+                }
+            }
+            case PacketType.Play.Client.INTERACT_ENTITY -> {
+                Player player = event.getPlayer();
+                WrapperPlayClientInteractEntity wrapper = new WrapperPlayClientInteractEntity(event);
+                if (YHTPacketLogger.getDatabase() != null) {
+                    executor.submit(() -> YHTPacketLogger.getDatabase().saveInteractEntityPacket(player, wrapper));
                 }
             }
             default -> {}

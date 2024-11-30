@@ -1,5 +1,6 @@
 package me.youhavetrouble.packetlogger.storage;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -43,7 +44,26 @@ public class SqliteDatabase implements Database {
                                 yaw DOUBLE,
                                 pitch DOUBLE,
                                 on_ground BOOLEAN,
-                                protocol_version INT,
+                                protocol_version INT NOT NULL,
+                                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                            )
+                    """);
+        } catch (SQLException e) {
+        }
+
+        try (Connection connection = dataSource.getConnection()) {
+            connection.createStatement().execute("""
+                            CREATE TABLE IF NOT EXISTS interact_entity_packets (
+                                id VARCHAR(36) NOT NULL PRIMARY KEY,
+                                player_id TEXT NOT NULL,
+                                player_x DOUBLE NOT NULL,
+                                player_y DOUBLE NOT NULL,
+                                player_z DOUBLE NOT NULL,
+                                target_x DOUBLE,
+                                target_y DOUBLE,
+                                target_z DOUBLE,
+                                interaction_type VARCHAR(16),
+                                protocol_version INT NOT NULL,
                                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                             )
                     """);
@@ -54,7 +74,6 @@ public class SqliteDatabase implements Database {
 
     @Override
     public void saveMovementPacket(Player player, WrapperPlayClientPlayerFlying packet) {
-
         try (Connection connection = dataSource.getConnection()) {
             PreparedStatement statement = connection.prepareStatement("""
                     INSERT INTO movement_packets (
@@ -78,7 +97,40 @@ public class SqliteDatabase implements Database {
             if (plugin == null) return;
             plugin.getSLF4JLogger().warn("Failed to save packet", e);
         }
+    }
 
+    @Override
+    public void saveInteractEntityPacket(Player player, WrapperPlayClientInteractEntity packet) {
+        try (Connection connection = dataSource.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement("""
+                    INSERT INTO interact_entity_packets (
+                         id, player_id, player_x, player_y, player_z, target_x, target_y, target_z, interaction_type, protocol_version
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """);
+
+            statement.setString(1, UUID.randomUUID().toString());
+            statement.setString(2, player.getUniqueId().toString());
+            statement.setDouble(3, player.getEyeLocation().getX());
+            statement.setDouble(4, player.getEyeLocation().getY());
+            statement.setDouble(5, player.getEyeLocation().getZ());
+            if (packet.getTarget().isEmpty()) {
+                statement.setNull(6, java.sql.Types.DOUBLE);
+                statement.setNull(7, java.sql.Types.DOUBLE);
+                statement.setNull(8, java.sql.Types.DOUBLE);
+            } else {
+                statement.setDouble(6, packet.getTarget().get().getX());
+                statement.setDouble(7, packet.getTarget().get().getY());
+                statement.setDouble(8, packet.getTarget().get().getZ());
+            }
+            statement.setString(9, packet.getAction().toString());
+            statement.setInt(10, packet.getClientVersion().getProtocolVersion());
+            statement.execute();
+        } catch (SQLException e) {
+            YHTPacketLogger plugin = YHTPacketLogger.getInstance();
+            if (plugin == null) return;
+            plugin.getSLF4JLogger().warn("Failed to save packet", e);
+        }
     }
 
     @Override
